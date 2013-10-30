@@ -16,21 +16,25 @@ import os
 debug = 0
 cloudfront = 1
 
-def fetch(PLAYLIST):
+def fetch():
 	global table
 	global PROXY
-
+	global PLAYLIST
 	output = urllib2.urlopen(PLAYLIST).read()
 	cmd = "curl "
 
 	new = output.split('\n')
 
+	for line in new:
+		if line.find('.m3u8') != -1:
+			PLAYLIST = PLAYLIST.split('myStream')[0] + 'myStream/' + line
+			print PLAYLIST
 	for line in new: 
 		# print line
-		if line.find('http://') != -1:
+		if line.find('.ts') != -1:
 			if(debug):
 				print line
-			index = int((line.split('mystream-')[1]).split('.ts')[0])
+			index = int((line.split('_')[1]).split('.ts')[0])
 			if(debug):
 				print index
 
@@ -39,10 +43,8 @@ def fetch(PLAYLIST):
 				# configure the video segment addresses
 				if cloudfront == 0:
 					proxy_cmd = cmd + PROXY + "/streaming" + line.split("/streaming")[1]
-					
 				else :
-					proxy_cmd = cmd + line
-
+					proxy_cmd = cmd + PLAYLIST.split('myStream')[0] + 'myStream/' + line
 				print "\n====== " + proxy_cmd				
 				os.system(proxy_cmd +  " >> video")
 				table[index] = 1;
@@ -100,9 +102,8 @@ def main(argv):
 
 
 	while 1:
-		fetch(PLAYLIST)
+		fetch()
 		time.sleep(5)
-
 
 
 if __name__ == "__main__":
